@@ -1,0 +1,19 @@
+# 02_search_map.txt - Operation Native Scheduler Research Targets
+
+## 1. Lock-Free Block Tracker (Piece.h)
+- [ ] Integration Point: Audit `Piece` constructor and internal `bitfield_` usage. Determine if `PieceBlockTracker` should replace `bitfield_` or run in parallel for thread-safe reservations.
+- [ ] Memory Layout: Verify `std::array<std::atomic<uint8_t>, 2048>` memory impact (approx 2KB per Piece).
+
+## 2. Urgency-Aware Allocation (SegmentMan.cc)
+- [ ] `getSegment()` Audit: Identify where aria2 currently performs linear/greedy allocation. 
+- [ ] Urgency Logic: Design a "ranking" mechanism to prioritize pieces with higher `STATE_REQUESTED` counts.
+- [ ] Connection Mapping: Ensure `cuid` is propagated correctly for block ownership in `PieceBlockTracker`.
+
+## 3. HTTP End-Game Sniping
+- [ ] Trigger Point: Audit `SegmentMan` for `downloaded_bytes` tracking.
+- [ ] Sniping logic: Identify safe exit points for "losers" in the First-Write-Wins CAS race. 
+- [ ] Range Request: Verify how to duplicate requests for the same block without corrupting the `usedSegmentEntries_` list.
+
+## 4. Piece Completion Logic (PieceStorage.cc)
+- [ ] `completePiece()` Audit: Trace the path from `SegmentMan::completeSegment` to `PieceStorage::completePiece`.
+- [ ] Deferred Hash Check: Ensure SHA-256 verification only triggers after the `PieceBlockTracker` reports all blocks as `STATE_FINISHED`.

@@ -1,0 +1,44 @@
+# 03_research_deep_dive.log
+
+## Step 0: Integrity Baseline
+- baseline_curl.bin: 20492a4d0d84f8beb1767f6616229f85d44c2827b64bdbfb260ee12fa1109e0e (matches)
+- baseline_aria2.1.bin: 20492a4d0d84f8beb1767f6616229f85d44c2827b64bdbfb260ee12fa1109e0e (matches)
+- Note: High-speed download was elusive for fresh runs but existing 100MB file confirms baseline integrity.
+
+## Step 5: Technical Search & Research Goals
+
+### 1. libtorrent: torrent_peer bitfields
+Found in include/libtorrent/torrent_peer.hpp:
+- failcount: 5 bits
+- connectable: 1 bit
+- optimistically_unchoked: 1 bit
+- seed: 1 bit
+- maybe_upload_only: 1 bit
+- fast_reconnects: 4 bits
+- trust_points: signed 4 bits
+- source: 6 bits
+- pe_support: 1 bit
+- is_v6_addr: 1 bit
+- on_parole: 1 bit
+- banned: 1 bit
+- supports_utp/confirmed_supports_utp/supports_holepunch: 1 bit each
+- web_seed: 1 bit
+- protocol_v2: 1 bit
+- Note: speed_category and snubbed (as a bitfield) were NOT found in this version's torrent_peer struct. snubbed exists as a flag in peer_info.
+
+### 2. aria2: usedSegmentEntries_ in SegmentMan.cc
+Identified 16 hits in SegmentMan.cc with 0% lock coverage:
+- L162: push_back in checkoutSegment
+- L193-194: loop in getInFlightSegment
+- L260-261: loop in getCleanSegmentIfOwnerIsIdle
+- L313-318: loop and erase in cancelSegment
+- L329-333: loop and erase in cancelSegment
+- L344-347: loop and clear in cancelAllSegments
+- L379-385: find_if and erase in completeSegment
+- All hits must be guarded by picker_mutex_.
+
+### 3. libtorrent: piece_picker::inc_refcount signature
+Found in include/libtorrent/piece_picker.hpp:
+- void inc_refcount(piece_index_t, torrent_peer const*);
+- void inc_refcount(typed_bitfield<piece_index_t> const& bitmask, const torrent_peer* peer);
+- Both signatures are available for the rarity bootstrap.

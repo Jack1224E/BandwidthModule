@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/home/jack/Documents/Bandwidth_Module/build",
+  "command": "/usr/bin/clang++ -g -std=gnu++17 -o CMakeFiles/benchmark.dir/main.cpp.o -c /home/jack/Documents/Bandwidth_Module/main.cpp",
+  "file": "/home/jack/Documents/Bandwidth_Module/main.cpp",
+  "output": "/home/jack/Documents/Bandwidth_Module/build/CMakeFiles/benchmark.dir/main.cpp.o"
+}
+]

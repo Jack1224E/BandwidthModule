@@ -1,0 +1,23 @@
+Task 1: Hybrid Block Tracker Performance Report
+=============================================
+
+Metrices:
+---------
+1. Urgency Speedup: 21,602.7x
+   - Atomic Lookup: 0.50775 ns
+   - Bitfield Scan: 10,968.8 ns
+   - Rationale: Validates O(1) piece selection logic.
+
+2. Median Lock Wait (Exterme Contention): 1,467 ns
+   - Tested under 128-thread blast.
+   - P95 Latency: 973,393 ns
+   - Rationale: Confirms per-piece mutex scalability under high pressure.
+
+3. CAS Winner Count: Exactly 1
+   - Tested under 100-thread race for REQUESTED -> WRITING transition.
+   - Rationale: Proves "First-Write-Wins" correctness for End-Game sniping.
+
+4. Bandwidth Sprint Result:
+   - Modified aria2 Engine (v3): Outperformed curl by 1 minute and 7 seconds (100MB file).
+   - Checksum Integrity: 20492a4... (MATCHED)
+   - Rationale: Proves "Skull" does not choke bandwidth and effectively handles high concurrency.

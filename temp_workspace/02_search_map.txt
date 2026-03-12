@@ -1,0 +1,43 @@
+# 02_search_map.txt - Technical Mapping Answers
+
+1.  **The Rarity Bootstrap (libtorrent/src/piece_picker.cpp)**:
+    - **Signature**: `void piece_picker::inc_refcount(typed_bitfield<piece_index_t> const& bitmask, torrent_peer const* peer)`
+    - **Usage**: Iterates over the bitmask; for each bit set, it updates `m_piece_map[piece].peer_count` and moves pieces between rarity buckets in `m_priority_boundaries`.
+
+2.  **Peer Stubs (libtorrent/include/libtorrent/torrent_peer.hpp)**:
+    - **Minimum Fields**:
+        - `peer_connection_interface* connection`: Dereferenced to check if the peer is still active.
+        - `bool seed`: Used to skip rarity updates if the peer has everything (seeds are tracked separately in `m_seeds`).
+        - `bool on_parole`: Affects piece picking priority (prioritizes partials).
+        - `bool banned`: Must be checked before assigning blocks.
+
+3.  **The Modulo Bridge (aria2/src/SegmentMan.cc)**:
+    - **Handling**: `SegmentMan` currently delegates to `PieceStorage::getMissingPiece`.
+    - **Intercept Point**: `SegmentMan::getSegment` (Line 203) and `SegmentMan::getSegmentWithIndex` (Line 245). Replacing these calls with `LTPiecePicker::pick_pieces()` ensures our modulo math controls the initial allocation.
+
+4.  **End-Game Sniping (libtorrent/src/peer_connection.cpp)**:
+    - **Mechanism**: libtorrent maintains a `m_outstanding_requests` queue. When a `piece` message arrives, it calls `picker.mark_as_finished()`. If this completes a piece, it iterates over all other peers and calls `peer->cancel_request(block)` for any redundant requests.
+
+5.  **The Hashing Trigger (aria2/src/PieceStorage.cc)**:
+    - **Method**: `DefaultPieceStorage::completePiece` (Line 459) is where aria2 marks a piece as "done" in its bitfield.
+    - **Gating**: We must intercept this call to ensure `LTPiecePicker` has moved the piece to the final terminal state *only* after `PieceStorage` confirms the hash.
+
+6.  **Ceiling Math (libtorrent/src/piece_picker.cpp)**:
+    - **Verification**: `Line 173` uses `((total_size % piece_size) + block_size() - 1) / block_size()`. 
+    - **Conclusion**: Our `last_bpp` formula is 100% compliant with libtorrent internals.
+
+7.  **Deque Locking (aria2/src/SegmentMan.cc)**:
+    - **Coverage Map**:
+        - `checkoutSegment` (L162): `usedSegmentEntries_.push_back(entry)`
+        - `getInFlightSegment` (L193): Iterator loop.
+        - `getCleanSegmentIfOwnerIsIdle` (L260): Iterator loop.
+        - `cancelSegment` (L313, L329): `iterator` loop + `erase()`.
+        - `cancelAllSegments` (L344-347): `for-each` loop + `clear()`.
+        - `completeSegment` (L379-385): `std::find_if` + `erase()`.
+
+8.  **State Machine (libtorrent/include/libtorrent/piece_picker.hpp)**:
+    - **Enum `block_info::state`**:
+        - `state_none` (0): Available.
+        - `state_requested` (1): In-flight.
+        - `state_writing` (2): Disk I/O pending (O_DIRECT).
+        - `state_finished` (3): Block completed.
