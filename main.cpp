@@ -130,11 +130,13 @@ int main(int argc, char* argv[]) {
                     aria2::deleteDownloadHandle(handle);
                     break;
                 }
+/*
                 if (progress >= 10.0) {
                     std::cout << "SUCCESS: 10% completion reached." << std::endl;
                     aria2::deleteDownloadHandle(handle);
                     break;
                 }
+*/
 
                 aria2::deleteDownloadHandle(handle);
                 last_time = current_time;

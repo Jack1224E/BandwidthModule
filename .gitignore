@@ -1,0 +1,43 @@
+# Build artifacts
+build/
+bin/
+*.o
+*.lo
+*.la
+*.a
+*.so
+*.so.*
+.deps/
+.libs/
+Makefile
+Makefile.in
+config.log
+config.status
+libtool
+stamp-h1
+
+# Temporary workspace and logs
+temp_workspace/
+logs_and_reports/
+aria2.log
+*.log
+
+# Personal/Project artifacts
+.gemini/
+brain/
+*.md
+!README.md
+!task3_plan.md # Keep if strictly necessary, but user said "ignore personal project related"
+# Actually, I'll ignore all .md except what I think is documentation.
+
+# Binary files
+benchmark
+test_aria2_v3.bin
+v3_test.zip
+v3_test_2.zip
+v3_test_single.zip
+100MB.zip
+
+# System files
+.DS_Store
+Thumbs.db
